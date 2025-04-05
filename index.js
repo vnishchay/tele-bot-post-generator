@@ -1,13 +1,12 @@
 require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
-const { OpenAI } = require("openai");
 const mongoose = require("mongoose");
 const Content = require("./models/content");
+const axios = require("axios");
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize Deepseek client
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+const DEEPSEEK_API_URL = "https://api.deepseek.com/v1/chat/completions";
 
 // Initialize Telegram Bot
 const bot = new TelegramBot(process.env.TELEGRAM_BOT_TOKEN, { polling: true });
@@ -128,24 +127,33 @@ bot.on("message", async (msg) => {
   );
 
   try {
-    // Generate content with AI
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4",
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are a social media content creator. Generate engaging, creative content for social media posts based on the user's prompt. Include hashtags and emojis where appropriate. Format your response as: 1. Caption for Instagram/Facebook, 2. Short caption for Twitter/X, 3. Content idea for LinkedIn.",
+    // Generate content with Deepseek
+    const response = await axios.post(
+      DEEPSEEK_API_URL,
+      {
+        model: "deepseek-chat",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a social media content creator. Generate engaging, creative content for social media posts based on the user's prompt. Include hashtags and emojis where appropriate. Format your response as: 1. Caption for Instagram/Facebook, 2. Short caption for Twitter/X, 3. Content idea for LinkedIn.",
+          },
+          {
+            role: "user",
+            content: text,
+          },
+        ],
+        max_tokens: 800,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${DEEPSEEK_API_KEY}`,
+          "Content-Type": "application/json",
         },
-        {
-          role: "user",
-          content: text,
-        },
-      ],
-      max_tokens: 800,
-    });
+      }
+    );
 
-    const generatedContent = completion.choices[0].message.content;
+    const generatedContent = response.data.choices[0].message.content;
 
     // Save to database
     const newContent = new Content({
