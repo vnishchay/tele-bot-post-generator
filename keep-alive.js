@@ -1,7 +1,7 @@
 const https = require("https");
 
 // Your deployed app URL (update this after deployment)
-const url = "https://your-app-name.onrender.com";
+const url = "https://tele-bot-post-generator.onrender.com";
 
 // Ping the URL every 5 minutes to prevent the service from sleeping
 setInterval(() => {
